@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="1" author="lich">
+        <sql dbms="postgresql" endDelimiter=";">
+            CREATE SCHEMA walletdb
+        </sql>
+    </changeSet>
+
+    <changeSet id="2" author="lich">
+        <createTable tableName="wallet">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="balance" type="numeric(19, 2)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="3" author="lich">
+        <sql dbms="postgresql" endDelimiter=";">
+            INSERT INTO wallet (id, balance)
+            VALUES
+                ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 100.00),
+                ('6f5902ac-10d3-11e0-bc6a-00254c2c4242', 500.50),
+                ('07b0e4a8-10d3-11e0-89b6-00254c2c4242', 20.75);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
