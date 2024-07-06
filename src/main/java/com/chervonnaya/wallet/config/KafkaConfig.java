@@ -52,6 +52,7 @@ public class KafkaConfig {
     public ConcurrentKafkaListenerContainerFactory<String, WalletOperationRequest> kafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, WalletOperationRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        factory.setConcurrency(3);
         return factory;
     }
 }

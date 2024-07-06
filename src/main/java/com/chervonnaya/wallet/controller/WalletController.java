@@ -33,7 +33,7 @@ public class WalletController {
     @PostMapping
     @ResponseBody
     public void performOperation(@RequestBody WalletOperationRequest request) {
-        producerService.sendMessage(request);
+        producerService.sendMessage(request, request.getId());
     }
 
 
