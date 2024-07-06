@@ -5,6 +5,8 @@ import com.chervonnaya.wallet.model.Wallet;
 import com.chervonnaya.wallet.service.KafkaProducerService;
 import com.chervonnaya.wallet.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(value = "/api/v1/wallet")
@@ -32,8 +36,19 @@ public class WalletController {
 
     @PostMapping
     @ResponseBody
-    public void performOperation(@RequestBody WalletOperationRequest request) {
-        producerService.sendMessage(request, request.getId());
+    public ResponseEntity<Void> performOperation(@RequestBody WalletOperationRequest request) {
+        CompletableFuture<Boolean> future = producerService.sendMessage(request, request.getId());
+        try {
+            boolean isSuccess = future.get();
+
+            if (isSuccess) {
+                return new ResponseEntity<>(HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
