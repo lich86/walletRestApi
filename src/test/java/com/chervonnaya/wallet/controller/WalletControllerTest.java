@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -26,7 +25,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -103,7 +101,6 @@ class WalletControllerTest {
         }
 
         executorService.shutdown();
-        executorService.awaitTermination(5, TimeUnit.MINUTES);
 
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             HttpGet httpGet = new HttpGet(URL + "/" + id);
@@ -114,8 +111,6 @@ class WalletControllerTest {
             JsonNode rootNode = objectMapper.readTree(responseString);
             BigDecimal balance = new BigDecimal(rootNode.get("balance").asText());
             assertEquals(new BigDecimal("0.0"), balance);
-        } catch (ClientProtocolException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
