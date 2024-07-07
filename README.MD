@@ -8,11 +8,11 @@ The project is written using Spring Boot, Hibernate, Liquibase and Kafka.
 
 ## Technologies:
 
-Programming Language: Java 17
-Database: PostgresQL
-Database Migrations: Liquibase
-Project Build: Maven
-Messages broker: Kafka
+- Programming Language: Java 17
+- Database: PostgresQL
+- Database Migrations: Liquibase
+- Project Build: Maven
+- Messages broker: Kafka
 
 To run, the following is required:
 - Docker
