@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class WalletNotFoundException extends RuntimeException{
+public class WalletNotFoundException extends Exception{
     private String walletId;
 }

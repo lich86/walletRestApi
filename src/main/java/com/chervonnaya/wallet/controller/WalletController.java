@@ -1,6 +1,7 @@
 package com.chervonnaya.wallet.controller;
 
 import com.chervonnaya.wallet.dto.WalletOperationRequest;
+import com.chervonnaya.wallet.exception.WalletNotFoundException;
 import com.chervonnaya.wallet.model.Wallet;
 import com.chervonnaya.wallet.service.KafkaProducerService;
 import com.chervonnaya.wallet.service.WalletService;
@@ -30,7 +31,7 @@ public class WalletController {
 
     @GetMapping(value = "/{id}")
     @ResponseBody
-    public Wallet getBalance(@PathVariable(name = "id") UUID id) {
+    public Wallet getBalance(@PathVariable(name = "id") UUID id) throws WalletNotFoundException {
         return walletService.getWallet(id);
     }
 

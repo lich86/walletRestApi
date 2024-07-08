@@ -19,11 +19,14 @@ public class KafkaProducerService {
 
     @Async
     public CompletableFuture<Boolean> sendMessage(WalletOperationRequest request, UUID walletId) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
         try {
-            kafkaTemplate.send(TOPIC, String.valueOf(walletId), request);
-            return CompletableFuture.completedFuture(true);
+            kafkaTemplate.send(TOPIC, String.valueOf(walletId), request).get();
+            future.complete(true);
         } catch (Exception e) {
-            return CompletableFuture.completedFuture(false);
+            future.completeExceptionally(e);
         }
+
+        return future;
     }
 }

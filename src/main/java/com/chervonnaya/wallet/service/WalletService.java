@@ -21,10 +21,10 @@ public class WalletService {
     WalletRepository walletRepository;
 
     @Transactional
-    public void deposit(UUID id, BigDecimal amount) {
+    public void deposit(UUID id, BigDecimal amount) throws WalletNotFoundException{
         Wallet wallet;
         try {
-            wallet = walletRepository.findById(id).orElseThrow(NoSuchElementException::new);
+            wallet = getWallet(id);
             wallet.setBalance(wallet.getBalance().add(amount));
             walletRepository.save(wallet);
             log.debug(String.format("Deposit %s to wallet %s", amount, id));
@@ -34,10 +34,10 @@ public class WalletService {
     }
 
     @Transactional
-    public void withdraw(UUID id, BigDecimal amount) {
+    public void withdraw(UUID id, BigDecimal amount) throws WalletNotFoundException, InsufficientFundsException {
         Wallet wallet;
         try {
-            wallet = walletRepository.findById(id).orElseThrow(NoSuchElementException::new);
+            wallet = getWallet(id);
             if (wallet.getBalance().compareTo(amount) < 0) {
                 throw new InsufficientFundsException(id.toString());
             }
@@ -49,7 +49,7 @@ public class WalletService {
         }
     }
 
-    public Wallet getWallet(UUID id) {
+    public Wallet getWallet(UUID id) throws WalletNotFoundException {
         try {
             return walletRepository.findById(id).orElseThrow(NoSuchElementException::new);
         } catch (NoSuchElementException e) {
@@ -57,4 +57,5 @@ public class WalletService {
         }
 
     }
+
 }

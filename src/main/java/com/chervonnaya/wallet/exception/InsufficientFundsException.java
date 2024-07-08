@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class InsufficientFundsException extends RuntimeException {
+public class InsufficientFundsException extends Exception{
     private String walletId;
 }

@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class BadJsonException extends RuntimeException{
+public class BadJsonException extends Exception{
     private String message;
 }
