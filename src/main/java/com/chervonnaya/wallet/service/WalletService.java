@@ -1,5 +1,7 @@
 package com.chervonnaya.wallet.service;
 
+import com.chervonnaya.wallet.dto.WalletOperationRequest;
+import com.chervonnaya.wallet.exception.BadJsonException;
 import com.chervonnaya.wallet.exception.InsufficientFundsException;
 import com.chervonnaya.wallet.exception.WalletNotFoundException;
 import com.chervonnaya.wallet.model.Wallet;
@@ -21,7 +23,24 @@ public class WalletService {
     WalletRepository walletRepository;
 
     @Transactional
-    public void deposit(UUID id, BigDecimal amount) throws WalletNotFoundException{
+    public void performOperation(WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
+        switch (request.getOperation()) {
+            case "DEPOSIT":
+                deposit(request.getId(), request.getAmount());
+                log.debug(String.format("Deposit %s from wallet %s", request.getAmount(), request.getId()));
+                break;
+            case "WITHDRAW":
+                withdraw(request.getId(), request.getAmount());
+                log.debug(String.format("Withdraw %s from wallet %s", request.getAmount(), request.getId()));
+                break;
+            default:
+                throw new BadJsonException("Unknown operation: " + request.getOperation());
+        }
+
+    }
+
+    @Transactional
+    protected void deposit(UUID id, BigDecimal amount) throws WalletNotFoundException{
         Wallet wallet;
         try {
             wallet = getWallet(id);
@@ -34,7 +53,7 @@ public class WalletService {
     }
 
     @Transactional
-    public void withdraw(UUID id, BigDecimal amount) throws WalletNotFoundException, InsufficientFundsException {
+    protected void withdraw(UUID id, BigDecimal amount) throws WalletNotFoundException, InsufficientFundsException {
         Wallet wallet;
         try {
             wallet = getWallet(id);

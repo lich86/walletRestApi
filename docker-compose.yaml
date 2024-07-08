@@ -1,23 +1,5 @@
-version: '3.8'
+version: '1.0'
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    env_file:
-      - zoo.env
-    networks:
-      - wallet
-
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    depends_on:
-      - zookeeper
-    ports:
-      - "9092:9092"
-    env_file:
-      - kafka.env
-    networks:
-      - wallet
-
   postgres:
     image: postgres:latest
     env_file:
@@ -32,7 +14,6 @@ services:
       context: .
       dockerfile: DockerFile
     depends_on:
-      - kafka
       - postgres
     ports:
       - "8080:8080"
