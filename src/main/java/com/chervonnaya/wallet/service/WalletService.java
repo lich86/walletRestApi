@@ -14,27 +14,34 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class WalletService {
 
-    WalletRepository walletRepository;
+    private final WalletRepository walletRepository;
+    private final ReentrantLock lock = new ReentrantLock();
 
     @Transactional
     public void performOperation(WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
-        switch (request.getOperation()) {
-            case "DEPOSIT":
-                deposit(request.getId(), request.getAmount());
-                log.debug(String.format("Deposit %s from wallet %s", request.getAmount(), request.getId()));
-                break;
-            case "WITHDRAW":
-                withdraw(request.getId(), request.getAmount());
-                log.debug(String.format("Withdraw %s from wallet %s", request.getAmount(), request.getId()));
-                break;
-            default:
-                throw new BadJsonException("Unknown operation: " + request.getOperation());
+        lock.lock();
+        try {
+            switch (request.getOperation()) {
+                case "DEPOSIT":
+                    deposit(request.getId(), request.getAmount());
+                    log.debug(String.format("Deposit %s from wallet %s", request.getAmount(), request.getId()));
+                    break;
+                case "WITHDRAW":
+                    withdraw(request.getId(), request.getAmount());
+                    log.debug(String.format("Withdraw %s from wallet %s", request.getAmount(), request.getId()));
+                    break;
+                default:
+                    throw new BadJsonException("Unknown operation: " + request.getOperation());
+            }
+        } finally {
+            lock.unlock();
         }
 
     }

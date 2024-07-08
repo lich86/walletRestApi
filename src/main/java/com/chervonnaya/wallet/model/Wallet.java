@@ -11,7 +11,7 @@ import java.util.UUID;
 public class Wallet {
 
     @Id
-    UUID id;
-    BigDecimal balance;
+    private UUID id;
+    private BigDecimal balance;
 
 }
