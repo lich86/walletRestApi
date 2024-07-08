@@ -6,6 +6,7 @@ import com.chervonnaya.wallet.exception.InsufficientFundsException;
 import com.chervonnaya.wallet.exception.WalletNotFoundException;
 import com.chervonnaya.wallet.model.Wallet;
 import com.chervonnaya.wallet.service.WalletService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +34,7 @@ public class WalletController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<Void> performOperation(@RequestBody WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
+    public ResponseEntity<Void> performOperation(@Valid @RequestBody WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
         walletService.performOperation(request);
         return ResponseEntity.ok().build();
     }
