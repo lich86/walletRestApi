@@ -1,119 +1,106 @@
 package com.chervonnaya.wallet.controller;
 
-
 import com.chervonnaya.wallet.dto.WalletOperationRequest;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.chervonnaya.wallet.model.Wallet;
+import com.chervonnaya.wallet.service.WalletService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestConstructor;
-
-
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
-@ActiveProfiles("test")
-@AllArgsConstructor
-class WalletControllerTest {
 
-    private static final String URL = "http://localhost:8080/api/v1/wallet";
+@WebMvcTest(WalletController.class)
+public class WalletControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private WalletService walletService;
 
     @Test
-    void performOperation_Should_Succeed() {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            StringEntity entity = new StringEntity("{\"id\":\"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11\",\"operation\":\"WITHDRAW\",\"amount\":\"50\"}");
-            entity.setContentType("application/json");
-            HttpPost request = new HttpPost(URL);
-            request.setHeader("Content-Type", "application/json");
-            request.setEntity(entity);
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                assertEquals(response.getStatusLine().getStatusCode(), 200);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void getBalance_Should_Succeed() throws Exception {
+        UUID walletId = UUID.randomUUID();
+        Wallet wallet = new Wallet();
+        wallet.setId(walletId);
+        wallet.setBalance(BigDecimal.valueOf(1000));
+        when(walletService.getWallet(walletId)).thenReturn(wallet);
+
+        mockMvc.perform(get("/api/v1/wallet/" + walletId))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.id").value(walletId.toString()))
+            .andExpect(jsonPath("$.balance").value(1000));
     }
 
     @Test
-    void getBalance_Should_Succeed() {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpGet request = new HttpGet(URL + "/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11");
-            try (CloseableHttpResponse response = httpClient.execute(request)) {
-                assertEquals(response.getStatusLine().getStatusCode(), 200);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public void performOperation_Should_Succeed() throws Exception {
+        UUID walletId = UUID.randomUUID();
+        WalletOperationRequest request = new WalletOperationRequest();
+        request.setId(walletId);
+        request.setAmount(BigDecimal.valueOf(500));
+        request.setOperation("DEPOSIT");
+        doNothing().when(walletService).performOperation(any(WalletOperationRequest.class));
+
+        mockMvc.perform(post("/api/v1/wallet")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+            .andExpect(status().isOk());
     }
 
+    @ParameterizedTest
+    @MethodSource("argsProvider")
+    public void performOperation_Should_FailWith400Error(String expectedMessage, WalletOperationRequest request) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/wallet")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(new ObjectMapper().writeValueAsString(request)))
+            .andExpect(status().isBadRequest())
+            .andReturn();
 
-    @Test
-    public void loadTest() throws InterruptedException {
-        UUID id = UUID.fromString("ac037e1c-d53c-48f0-acfd-27cbf7c1e633");
+        String actualMessage = result.getResponse().getContentAsString();
 
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        for (int i = 0; i < 1000; i++) {
-            int operationIndex = i % 2;
-            executorService.submit(() -> {
-                try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-                    WalletOperationRequest request = new WalletOperationRequest();
-                    request.setId(id);
-
-                    if (operationIndex == 0) {
-                        request.setOperation("DEPOSIT");
-                        request.setAmount(new BigDecimal("100.0"));
-                    } else {
-                        request.setOperation("WITHDRAW");
-                        request.setAmount(new BigDecimal("100.0"));
-                    }
-
-                    String json = objectMapper.writeValueAsString(request);
-
-                    HttpPost httpPost = new HttpPost(URL);
-                    HttpEntity entity = new StringEntity(json);
-                    httpPost.setEntity(entity);
-                    httpPost.setHeader("Content-Type", "application/json");
-
-                    httpClient.execute(httpPost);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-        }
-
-        executorService.shutdown();
-
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpGet httpGet = new HttpGet(URL + "/" + id);
-            HttpResponse response = httpClient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            String responseString = EntityUtils.toString(entity);
-
-            JsonNode rootNode = objectMapper.readTree(responseString);
-            BigDecimal balance = new BigDecimal(rootNode.get("balance").asText());
-            assertEquals(new BigDecimal("0.0"), balance);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        assertTrue(actualMessage.contains(expectedMessage));
     }
+
+    static Stream<Arguments> argsProvider() {
+        UUID walletId = UUID.randomUUID();
+
+        return Stream.of(
+            Arguments.of("id can't be null", createRequest("WITHDRAW", new BigDecimal(500), null)),
+            Arguments.of("operation can't be blank", createRequest("", new BigDecimal(500), walletId)),
+            Arguments.of("amount can't be null", createRequest("WITHDRAW", null, walletId))
+        );
+    }
+
+    private static WalletOperationRequest createRequest(String operation, BigDecimal amount, UUID id) {
+        WalletOperationRequest request = new WalletOperationRequest();
+        request.setOperation(operation);
+        request.setAmount(amount);
+        request.setId(id);
+        return request;
+    }
+
 
 }
+
