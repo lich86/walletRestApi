@@ -9,6 +9,8 @@ import com.chervonnaya.wallet.repository.WalletRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,9 +25,12 @@ public class WalletService {
 
     private final WalletRepository walletRepository;
     private final ReentrantLock lock = new ReentrantLock();
+    private final RedissonClient redissonClient;
 
     @Transactional
     public void performOperation(WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
+        String walletId = UUID.randomUUID().toString();
+        RLock lock = redissonClient.getFairLock(walletId);
         lock.lock();
         try {
             switch (request.getOperation()) {
