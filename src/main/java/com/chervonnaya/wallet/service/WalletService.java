@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @Service
@@ -24,12 +23,11 @@ import java.util.concurrent.locks.ReentrantLock;
 public class WalletService {
 
     private final WalletRepository walletRepository;
-    private final ReentrantLock lock = new ReentrantLock();
     private final RedissonClient redissonClient;
 
     @Transactional
     public void performOperation(WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
-        String walletId = UUID.randomUUID().toString();
+        String walletId = request.getId().toString();
         RLock lock = redissonClient.getFairLock(walletId);
         lock.lock();
         try {
