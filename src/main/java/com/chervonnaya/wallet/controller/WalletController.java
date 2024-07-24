@@ -27,13 +27,11 @@ public class WalletController {
     private WalletService walletService;
 
     @GetMapping(value = "/{id}")
-    @ResponseBody
     public Wallet getBalance(@PathVariable(name = "id") UUID id) throws WalletNotFoundException {
         return walletService.getWallet(id);
     }
 
     @PostMapping
-    @ResponseBody
     public ResponseEntity<Void> performOperation(@Valid @RequestBody WalletOperationRequest request) throws WalletNotFoundException, InsufficientFundsException, BadJsonException {
         walletService.performOperation(request);
         return ResponseEntity.ok().build();
